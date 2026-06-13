@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
 	x402 "github.com/x402-foundation/x402/go"
@@ -16,6 +17,8 @@ const (
 	payTo   = "0xYourAddress"
 	price   = "0.01"
 	network = "eip155:84532" // sepolia, base mainnet: "eip155:8453"
+
+	httpPort = ":8080"
 )
 
 func main() {
@@ -24,7 +27,7 @@ func main() {
 	})
 
 	routes := x402http.RoutesConfig{
-		"/resource": {
+		"/paid": {
 			Accepts: x402http.PaymentOptions{
 				{
 					Scheme:  scheme,
@@ -41,10 +44,13 @@ func main() {
 		nethttp.WithFacilitatorClient(facilitator),
 		nethttp.WithScheme(x402.Network(network), exactserver.NewExactEvmScheme()),
 	)(http.HandlerFunc(myHandler)))
-	http.ListenAndServe(":8080", mux)
+	log.Printf("Starting server on %v\n", httpPort)
+	err := http.ListenAndServe(httpPort, mux)
+	log.Fatal(err)
 }
 
 func myHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("Payment accepted")
 	w.Header().Set("Content-Type", "application/json")
 	w.Write([]byte(`{"message":"payment accepted, here is the data"}`))
 }
